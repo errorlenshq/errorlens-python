@@ -101,6 +101,12 @@ class _Response(Iterable[bytes]):
         self._iterable = iterable
         self._finish = finish
         self._closed = False
+        self._finished = False
+
+    def _done(self) -> None:
+        if not self._finished:
+            self._finished = True
+            self._ctx.run(self._finish)
 
     def __iter__(self) -> Iterator[bytes]:
         iterator = self._ctx.run(iter, self._iterable)
@@ -108,6 +114,8 @@ class _Response(Iterable[bytes]):
             try:
                 chunk = self._ctx.run(next, iterator)
             except StopIteration:
+                # Fully sent. Some servers and test clients never call close(), so the request ends here too.
+                self._done()
                 return
             except BaseException as e:  # noqa: BLE001
                 if not isinstance(e, GeneratorExit):
@@ -124,7 +132,7 @@ class _Response(Iterable[bytes]):
             if close is not None:
                 self._ctx.run(close)
         finally:
-            self._ctx.run(self._finish)
+            self._done()
 
 
 class ErrorLensWsgiMiddleware:

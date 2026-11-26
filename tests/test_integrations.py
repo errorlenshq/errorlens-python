@@ -231,11 +231,20 @@ class WebTests(SdkTestCase):
 
         self.assertEqual(call_wsgi(app, "/items/1")[0], "200 OK")
         self.assertEqual(call_wsgi(app, "/items/13")[0], "500 INTERNAL SERVER ERROR")
+        # Flask's test client reads the body but never calls close(): the transaction must still end
+        with app.test_client() as tc:
+            self.assertEqual(tc.get("/items/2").data, b"ok")
+            tc.get("/items/13").data
         self.flush()
-        ev = self.server.items("event")[0]
+        events = self.server.items("event")
+        # Flask also logs the exception; it must not be reported a second time through logging
+        self.assertEqual(len(events), 2, [e["exception"]["values"][-1]["mechanism"]["type"] for e in events])
+        ev = events[0]
         self.assertEqual(ev["exception"]["values"][-1]["mechanism"]["type"], "flask")
         self.assertEqual(ev["transaction"], "GET /items/<int:item_id>")
-        ok = [t for t in self.server.items("transaction") if t["contexts"]["trace"]["status"] == "ok"]
+        txs = self.server.items("transaction")
+        self.assertEqual(len(txs), 4)
+        ok = [t for t in txs if t["contexts"]["trace"]["status"] == "ok"]
         self.assertEqual(ok[0]["transaction"], "GET /items/<int:item_id>")
 
     def test_fastapi(self) -> None:

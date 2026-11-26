@@ -84,6 +84,19 @@ class ErrorTests(SdkTestCase):
         self.assertEqual([v["type"] for v in values], ["KeyError", "ValueError"])
         self.assertEqual(values[0]["mechanism"]["source"], "__cause__")
 
+    def test_same_exception_is_reported_once(self) -> None:
+        import logging
+        try:
+            raise RuntimeError("once")
+        except RuntimeError as e:
+            first = errorlens.capture_exception(e)
+            second = errorlens.capture_exception(e)
+            logging.getLogger("app").exception("failed")  # the logging integration sees it too
+        self.assertIsNotNone(first)
+        self.assertIsNone(second)
+        self.flush()
+        self.assertEqual(len(self.events()), 1)
+
     def test_library_frames_are_not_in_app(self) -> None:
         try:
             json.loads("{not json")

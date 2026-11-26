@@ -168,8 +168,16 @@ class Client:
             error = sys.exc_info()[1]
         if error is None:
             return None
+        # One report per exception object: a framework hook, logger.exception() and the thread or
+        # exit hook can all see the same exception.
+        if getattr(error, "__errorlens_captured__", False):
+            return None
         if self._ignored(error):
             return None
+        try:
+            error.__errorlens_captured__ = True  # type: ignore[attr-defined]
+        except Exception:  # noqa: BLE001 - some exception types refuse new attributes
+            pass
         o = self.options
         event = {
             "level": level,
