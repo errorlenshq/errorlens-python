@@ -1,0 +1,51 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "errorlens"
+dynamic = ["version"]
+description = "Python SDK for ErrorLens: error tracking, performance tracing, logs and cron monitoring."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.9"
+authors = [{ name = "ErrorLens" }]
+keywords = ["error tracking", "exceptions", "monitoring", "apm", "tracing", "logging", "errorlens"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Framework :: Django",
+  "Framework :: Flask",
+  "Framework :: FastAPI",
+  "Framework :: Celery",
+  "Topic :: Software Development :: Bug Tracking",
+  "Topic :: System :: Monitoring",
+  "Typing :: Typed",
+]
+# No dependencies: only the Python standard library.
+dependencies = []
+
+[project.urls]
+Homepage = "https://errorlens.io"
+Documentation = "https://errorlens.io/docs/python/"
+Source = "https://github.com/errorlenshq/errorlens-python"
+Issues = "https://github.com/errorlenshq/errorlens-python/issues"
+
+[tool.hatch.version]
+path = "src/errorlens/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/errorlens"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/errorlens", "tests", "README.md", "LICENSE"]

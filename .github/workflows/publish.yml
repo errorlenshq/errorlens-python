@@ -1,0 +1,34 @@
+# Publishes to PyPI when a version tag (v1.2.3) is pushed, using trusted
+# publishing: PyPI trusts this repository's workflow; no token is stored.
+name: Publish
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  pypi:
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Version matches tag
+        run: |
+          v=$(python -c "import re;print(re.search(r'\"(.+)\"', open('src/errorlens/_version.py').read()).group(1))")
+          test "v$v" = "${GITHUB_REF_NAME}" || { echo "version $v does not match tag ${GITHUB_REF_NAME}"; exit 1; }
+      - name: Test and build
+        run: |
+          pip install -e . build
+          (cd tests && python -m unittest test_core)
+          python -m build
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
